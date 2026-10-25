@@ -1,0 +1,24 @@
+[Unit]
+Description=KIDS LAB Digital Signage
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kids-signage
+Group=kids-signage
+WorkingDirectory=/opt/kids-signage
+EnvironmentFile=/etc/kids-signage.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/kids-signage/.venv/bin/uvicorn app:app --host 0.0.0.0 --port 8080
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/kids-signage
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target
