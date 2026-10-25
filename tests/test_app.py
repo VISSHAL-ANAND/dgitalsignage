@@ -1,10 +1,13 @@
 import os
 import tempfile
+import sys
 from pathlib import Path
 
 os.environ.setdefault("ADMIN_USER", "test-admin")
 os.environ.setdefault("ADMIN_PASSWORD", "test-password-for-ci-only")
 os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="kids-signage-tests-")
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from fastapi.testclient import TestClient
 import app as signage
