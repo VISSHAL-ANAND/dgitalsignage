@@ -14,7 +14,7 @@ Self-hosted KIDS LAB signage manager for Raspberry Pi 5 and multiple screens, wi
 - Admin dashboard, responsive styling, health endpoint, systemd service template, and Raspberry Pi installation helper.
 
 ## Known limitations / not yet verified
-- No automated test suite yet.
+- Automated API tests now cover health, admin authentication, display creation, media upload, playlist isolation, and media serving; GitHub Actions passed on the implementation commit.
 - Not tested on Raspberry Pi 5 hardware or an attached display.
 - No end-to-end browser tests.
 - Video codec compatibility depends on browser/OS hardware decoding.
