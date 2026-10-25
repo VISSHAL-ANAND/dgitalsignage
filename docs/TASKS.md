@@ -11,7 +11,7 @@
 - [ ] Confirm admin access is restricted to the intended network/VPN; do not expose port 8080 publicly.
 
 ## P1 — Engineering hardening
-- [ ] Add automated API tests for authentication, uploads, displays, playlists, and deletion.
+- [x] Add initial automated API tests for authentication, uploads, display creation, playlist isolation, and media serving (deletion coverage remains to add).
 - [ ] Add browser-based end-to-end tests.
 - [ ] Add upload content-signature validation and optional malware scanning.
 - [ ] Add file count/storage quotas and cleanup/backup instructions.
