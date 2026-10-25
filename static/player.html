@@ -35,9 +35,9 @@
       if (item.media_type === 'video') {
         root.innerHTML = '<video class="player-media" src="' + escapeHtml(item.url) + '" autoplay muted playsinline></video>';
         const video = root.querySelector('video');
-        video.addEventListener('ended', next);
-        video.addEventListener('error', next);
-        timer = setTimeout(next, Math.max(15, Number(item.duration) || 30) * 1000);
+        video.addEventListener('ended', next, { once: true });
+        video.addEventListener('error', next, { once: true });
+        video.play().catch(next);
       } else {
         root.innerHTML = '<img class="player-media" alt="' + escapeHtml(item.title) + '" src="' + escapeHtml(item.url) + '"><div class="player-caption"><span>' + escapeHtml(item.title) + '</span></div>';
         timer = setTimeout(next, (Number(item.duration) || 10) * 1000);
