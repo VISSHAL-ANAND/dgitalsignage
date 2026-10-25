@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>KIDS LAB | Signage Control</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="admin-body">
+  <header class="topbar">
+    <a class="brand" href="/admin"><span class="brand-mark">K</span><span><strong>KIDS LAB</strong><small>DIGITAL SIGNAGE</small></span></a>
+    <div class="topbar-right"><span class="status-dot"></span><span>Local control</span><button id="refresh-btn" class="button button-quiet">Refresh</button></div>
+  </header>
+  <main class="shell">
+    <section class="hero">
+      <div><p class="eyebrow">CONTROL CENTER / 01</p><h1>Make the lab<br><em>impossible to miss.</em></h1><p class="hero-copy">Manage media, build each screen's playlist, and keep KIDS LAB moving.</p></div>
+      <div class="hero-card"><span class="hero-card-label">SYSTEM STATUS</span><strong><span class="status-dot"></span> Ready for content</strong><p>Changes are saved to this signage server.</p><div class="hero-rule"></div><small>Raspberry Pi · Multi-display ready</small></div>
+    </section>
+    <section class="metrics">
+      <article class="metric"><span>DISPLAYS</span><strong id="display-count">—</strong><small>Configured screens</small></article>
+      <article class="metric"><span>MEDIA ASSETS</span><strong id="media-count">—</strong><small>Images, videos, slides</small></article>
+      <article class="metric"><span>ACTIVE PLAYLIST</span><strong id="playlist-count">—</strong><small id="selected-display-label">Main display items</small></article>
+    </section>
+    <section class="workspace">
+      <div class="section-heading"><div><p class="eyebrow">CONTENT MANAGEMENT</p><h2>Build your screen</h2></div><span class="tag">01 / PLAYLIST</span></div>
+      <div class="panel display-panel">
+        <div class="panel-heading"><div><h3>Display selector</h3><p>Every display has its own playback URL and playlist.</p></div></div>
+        <div class="display-controls"><label class="field grow"><span>Current display</span><select id="display-select"></select></label><a id="open-player" class="button button-secondary" target="_blank" rel="noopener">Open player ↗</a></div>
+        <form id="display-form" class="new-display-form"><label class="field"><span>New display name</span><input id="new-display-name" placeholder="e.g. Innovation Zone" maxlength="100" required></label><label class="field"><span>Display ID</span><input id="new-display-id" placeholder="innovation-zone" maxlength="40" pattern="[a-zA-Z0-9][a-zA-Z0-9_-]*" required></label><button class="button button-primary" type="submit">+ Add display</button></form>
+      </div>
+      <div class="columns">
+        <section class="panel upload-panel">
+          <div class="panel-heading"><div><h3>Upload content</h3><p>Images, video, or PowerPoint slides.</p></div><span class="upload-icon">↑</span></div>
+          <form id="upload-form">
+            <label class="dropzone" for="media-file"><span class="drop-icon">↥</span><strong>Choose files to upload</strong><span>JPG, PNG, WEBP, GIF, MP4, WEBM, MOV, PPT, PPTX</span><small>Maximum 200 MB per file</small><input id="media-file" name="file" type="file" accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.mov,.m4v,.ppt,.pptx" required></label>
+            <label class="field"><span>Slide / image duration (seconds)</span><input id="duration" type="number" min="3" max="600" value="10" required></label>
+            <button class="button button-primary full-width" type="submit">Upload to selected display ↗</button>
+            <p id="upload-status" class="form-status" role="status"></p>
+          </form>
+          <p class="hint">PowerPoint files are converted into static images. Animations and transitions are not preserved.</p>
+        </section>
+        <section class="panel playlist-panel">
+          <div class="panel-heading"><div><h3>Playback sequence</h3><p>Choose what this display plays and in what order.</p></div><span id="playlist-badge" class="tag">0 ITEMS</span></div>
+          <div id="playlist" class="playlist"><div class="empty-state">Loading your playlist…</div></div>
+          <div class="playlist-footer"><span id="playlist-help">Select assets below to add them.</span><button id="save-playlist" class="button button-primary">Save playlist</button></div>
+        </section>
+      </div>
+      <section class="panel library-panel">
+        <div class="panel-heading"><div><p class="eyebrow">MEDIA LIBRARY</p><h3>Available assets</h3><p>Add an asset to the selected display or remove it from storage.</p></div><span class="tag">LIBRARY</span></div>
+        <div id="library" class="library-grid"><div class="empty-state">Loading media library…</div></div>
+      </section>
+    </section>
+    <footer class="footer"><span>KIDS LAB DIGITAL SIGNAGE</span><span>Built for ideas worth displaying.</span></footer>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
