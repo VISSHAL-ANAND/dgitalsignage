@@ -29,6 +29,9 @@ function renderDisplays() {
   $("#display-select").innerHTML = state.displays.map(d => '<option value="' + esc(d.id) + '">' + esc(d.name) + ' · ' + esc(d.id) + '</option>').join("");
   $("#display-select").value = state.selectedDisplay;
   $("#open-player").href = "/display/" + encodeURIComponent(state.selectedDisplay);
+  if ($("#control-status")) api("/api/admin/displays/" + encodeURIComponent(state.selectedDisplay) + "/control")
+    .then(data => { $("#control-status").textContent = ({ play: "Playing", freeze: "Frozen", break: "Break screen" })[data.mode] || "Playing"; })
+    .catch(() => {});
   $("#display-count").textContent = state.displays.length;
   $("#selected-display-label").textContent = (currentDisplay()?.name || "Selected display") + " items";
 }
@@ -72,6 +75,18 @@ $("#display-select").addEventListener("change", async event => {
   try { await loadPlaylist(); renderLibrary(); } catch (error) { notify(error.message, true); }
 });
 $("#refresh-btn").addEventListener("click", loadAll);
+async function setDisplayMode(mode) {
+  try {
+    const result = await api("/api/admin/displays/" + encodeURIComponent(state.selectedDisplay) + "/control", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode })
+    });
+    $("#control-status").textContent = ({ play: "Playing", freeze: "Frozen", break: "Break screen" })[result.mode];
+    notify("Display control: " + $("#control-status").textContent);
+  } catch (error) { notify(error.message, true); }
+}
+$("#control-play").addEventListener("click", () => setDisplayMode("play"));
+$("#control-freeze").addEventListener("click", () => setDisplayMode("freeze"));
+$("#control-break").addEventListener("click", () => setDisplayMode("break"));
 $("#display-form").addEventListener("submit", async event => {
   event.preventDefault();
   const name = $("#new-display-name").value.trim();
