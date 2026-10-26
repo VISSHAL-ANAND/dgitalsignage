@@ -38,6 +38,13 @@
             <button class="button button-primary full-width" type="submit">Upload to selected display ↗</button>
             <p id="upload-status" class="form-status" role="status"></p>
           </form>
+          <div class="panel-heading" style="margin-top:1.5rem"><div><h3>Add YouTube video</h3><p>Paste a public YouTube video link.</p></div></div>
+          <form id="youtube-form">
+            <label class="field"><span>YouTube URL</span><input id="youtube-url" type="url" placeholder="https://www.youtube.com/watch?v=..." required></label>
+            <button class="button button-secondary full-width" type="submit">Add YouTube to playlist ↗</button>
+            <p id="youtube-status" class="form-status" role="status"></p>
+          </form>
+          <p class="hint">YouTube videos need internet access on the display. Playback is muted for autoplay.</p>
           <p class="hint">PowerPoint files are converted into static images. Animations and transitions are not preserved.</p>
         </section>
         <section class="panel playlist-panel">
