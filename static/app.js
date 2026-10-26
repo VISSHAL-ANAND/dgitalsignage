@@ -109,6 +109,26 @@ $("#upload-form").addEventListener("submit", async event => {
     button.disabled = false; button.textContent = "Upload to selected display ↗";
   }
 });
+$("#youtube-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const button = event.currentTarget.querySelector("button[type=submit]");
+  button.disabled = true; button.textContent = "Adding…";
+  const form = new FormData();
+  form.append("url", $("#youtube-url").value.trim());
+  form.append("display_id", state.selectedDisplay);
+  try {
+    const result = await api("/api/admin/youtube", { method: "POST", body: form });
+    $("#youtube-status").textContent = result.message;
+    $("#youtube-form").reset();
+    await loadAll();
+    notify(result.message);
+  } catch (error) {
+    $("#youtube-status").textContent = error.message;
+    notify(error.message, true);
+  } finally {
+    button.disabled = false; button.textContent = "Add YouTube to playlist ↗";
+  }
+});
 $("#library").addEventListener("click", async event => {
   const add = event.target.closest(".add-media");
   const remove = event.target.closest(".delete-media");
