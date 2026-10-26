@@ -9,18 +9,16 @@
 </head>
 <body class="player-body">
   <div id="player-root" class="player-root">
-    <div class="player-brand"><span class="brand-mark">K</span><span><strong>KIDS LAB</strong><small>INNOVATION · DESIGN · BUILD</small></span></div>
-    <div id="player-content" class="player-content"><div class="player-welcome"><p class="eyebrow">KIDS LAB / DIGITAL CANVAS</p><h1>Ideas become<br><em>what's next.</em></h1><p>Preparing display…</p></div></div>
-    <div class="player-footer"><span id="display-name">KIDS LAB DISPLAY</span><span id="player-clock"></span><span id="player-count">CONNECTING</span></div>
+    <div id="player-content" class="player-content"></div>
+    <div id="break-screen" hidden></div>
   </div>
   <script>
   (() => {
     const displayId = decodeURIComponent(location.pathname.split('/').filter(Boolean).pop() || 'main');
     const root = document.getElementById('player-content');
-    const clock = document.getElementById('player-clock');
-    const count = document.getElementById('player-count');
-    const displayName = document.getElementById('display-name');
+    const breakScreen = document.getElementById('break-screen');
     let items = [], index = 0, timer = null, refreshTimer = null, ytPlayer = null;
+    let mode = 'play', lastRenderedId = null;
     let ytApiReady = false, pendingYouTube = false;
     window.onYouTubeIframeAPIReady = () => { ytApiReady = true; if (pendingYouTube) startYouTube(); };
     function startYouTube() {
@@ -48,16 +46,31 @@
       }
     }
     const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    function tick() { clock.textContent = new Intl.DateTimeFormat(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit'}).format(new Date()); }
+    function applyMode(nextMode) {
+      if (nextMode === mode) return;
+      mode = nextMode;
+      if (mode === 'freeze') {
+        clearTimeout(timer);
+        const video = root.querySelector('video');
+        if (video) video.pause();
+        if (ytPlayer && ytPlayer.pauseVideo) { try { ytPlayer.pauseVideo(); } catch {} }
+      } else if (mode === 'break') {
+        clearTimeout(timer);
+        if (ytPlayer && ytPlayer.stopVideo) { try { ytPlayer.stopVideo(); } catch {} }
+        root.style.visibility = 'hidden';
+        breakScreen.hidden = false;
+      } else {
+        breakScreen.hidden = true;
+        root.style.visibility = 'visible';
+        render();
+      }
+    }
     function render() {
       clearTimeout(timer);
-      if (!items.length) {
-        root.innerHTML = '<div class="player-welcome"><p class="eyebrow">KIDS LAB / DIGITAL CANVAS</p><h1>Your next big idea<br><em>starts here.</em></h1><p>Open the admin dashboard to add content to this display.</p></div>';
-        count.textContent = 'NO CONTENT';
-        return;
-      }
+      if (mode !== 'play') return;
+      if (!items.length) { root.innerHTML = ''; return; }
       const item = items[index % items.length];
-      count.textContent = String((index % items.length) + 1).padStart(2,'0') + ' / ' + String(items.length).padStart(2,'0');
+      lastRenderedId = item.id;
       if (item.mime_type === 'video/youtube') {
         root.innerHTML = '<div id="youtube-player" class="player-media"></div>';
         loadYouTubeApi();
@@ -65,33 +78,33 @@
       } else if (item.media_type === 'video') {
         root.innerHTML = '<video class="player-media" src="' + escapeHtml(item.url) + '" autoplay muted playsinline></video>';
         const video = root.querySelector('video');
+        video.preload = 'auto';
         video.addEventListener('ended', next, { once: true });
-        video.addEventListener('error', next, { once: true });
-        video.play().catch(next);
+        video.addEventListener('error', () => { timer = setTimeout(next, 3000); }, { once: true });
+        video.addEventListener('waiting', () => root.classList.add('buffering'));
+        video.addEventListener('playing', () => root.classList.remove('buffering'));
+        video.play().catch(() => { video.controls = true; });
       } else {
-        root.innerHTML = '<img class="player-media" alt="' + escapeHtml(item.title) + '" src="' + escapeHtml(item.url) + '"><div class="player-caption"><span>' + escapeHtml(item.title) + '</span></div>';
+        root.innerHTML = '<img class="player-media" alt="" src="' + escapeHtml(item.url) + '">';
         timer = setTimeout(next, (Number(item.duration) || 10) * 1000);
       }
     }
-    function next() { clearTimeout(timer); index = (index + 1) % Math.max(items.length, 1); render(); }
+    function next() { if (mode !== 'play') return; clearTimeout(timer); index = (index + 1) % Math.max(items.length, 1); render(); }
     async function load() {
       try {
         const response = await fetch('/api/player/' + encodeURIComponent(displayId), {cache:'no-store'});
         if (!response.ok) throw new Error('Display not found or server unavailable');
         const data = await response.json();
-        displayName.textContent = data.display.name.toUpperCase();
         const old = items.map(x => x.id).join(',');
         items = data.items;
-        if (old !== items.map(x => x.id).join(',')) { index = 0; render(); }
-        if (!items.length) render();
+        applyMode(data.mode || 'play');
+        if (old !== items.map(x => x.id).join(',')) { index = 0; lastRenderedId = null; if (mode === 'play') render(); }
+        if (items.length && mode === 'play' && lastRenderedId !== items[index % items.length].id) render();
       } catch (err) {
-        root.innerHTML = '<div class="player-welcome"><p class="eyebrow">DISPLAY OFFLINE</p><h1>Reconnecting<span class="loading-dots">…</span></h1><p>' + escapeHtml(err.message) + '</p></div>';
-        count.textContent = 'RETRYING';
+        root.innerHTML = '';
       }
     }
-    tick(); setInterval(tick, 15000);
-    load(); refreshTimer = setInterval(load, 30000);
-    document.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === ' ') next(); });
+    load(); refreshTimer = setInterval(load, 2000);
   })();
   </script>
 </body>
