@@ -20,7 +20,33 @@
     const clock = document.getElementById('player-clock');
     const count = document.getElementById('player-count');
     const displayName = document.getElementById('display-name');
-    let items = [], index = 0, timer = null, refreshTimer = null;
+    let items = [], index = 0, timer = null, refreshTimer = null, ytPlayer = null;
+    let ytApiReady = false, pendingYouTube = false;
+    window.onYouTubeIframeAPIReady = () => { ytApiReady = true; if (pendingYouTube) startYouTube(); };
+    function startYouTube() {
+      pendingYouTube = false;
+      const item = items[index % items.length];
+      if (!item || item.mime_type !== 'video/youtube') return;
+      if (ytPlayer && typeof ytPlayer.destroy === 'function') { try { ytPlayer.destroy(); } catch {} }
+      ytPlayer = new YT.Player('youtube-player', {
+        videoId: item.filename,
+        playerVars: { autoplay: 1, controls: 0, rel: 0, playsinline: 1, enablejsapi: 1 },
+        events: {
+          onReady: event => { event.target.mute(); event.target.playVideo(); },
+          onStateChange: event => { if (event.data === YT.PlayerState.ENDED) next(); },
+          onError: () => next()
+        }
+      });
+    }
+    function loadYouTubeApi() {
+      if (window.YT && window.YT.Player) { ytApiReady = true; return; }
+      if (!document.getElementById('youtube-iframe-api')) {
+        const script = document.createElement('script');
+        script.id = 'youtube-iframe-api';
+        script.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(script);
+      }
+    }
     const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function tick() { clock.textContent = new Intl.DateTimeFormat(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit'}).format(new Date()); }
     function render() {
@@ -32,7 +58,11 @@
       }
       const item = items[index % items.length];
       count.textContent = String((index % items.length) + 1).padStart(2,'0') + ' / ' + String(items.length).padStart(2,'0');
-      if (item.media_type === 'video') {
+      if (item.mime_type === 'video/youtube') {
+        root.innerHTML = '<div id="youtube-player" class="player-media"></div>';
+        loadYouTubeApi();
+        if (ytApiReady) startYouTube(); else pendingYouTube = true;
+      } else if (item.media_type === 'video') {
         root.innerHTML = '<video class="player-media" src="' + escapeHtml(item.url) + '" autoplay muted playsinline></video>';
         const video = root.querySelector('video');
         video.addEventListener('ended', next, { once: true });
