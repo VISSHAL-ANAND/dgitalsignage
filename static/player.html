@@ -30,7 +30,7 @@
         videoId: item.filename,
         playerVars: { autoplay: 1, controls: 0, rel: 0, playsinline: 1, enablejsapi: 1 },
         events: {
-          onReady: event => { event.target.mute(); event.target.playVideo(); },
+          onReady: event => { event.target.mute(); if (mode === 'play') event.target.playVideo(); else event.target.pauseVideo(); },
           onStateChange: event => { if (event.data === YT.PlayerState.ENDED) next(); },
           onError: () => next()
         }
@@ -62,7 +62,10 @@
       } else {
         breakScreen.hidden = true;
         root.style.visibility = 'visible';
-        render();
+        const video = root.querySelector('video');
+        if (video && lastRenderedId === items[index % Math.max(items.length, 1)]?.id) video.play().catch(() => {});
+        else if (ytPlayer && ytPlayer.playVideo && lastRenderedId === items[index % Math.max(items.length, 1)]?.id) { try { ytPlayer.playVideo(); } catch {} }
+        else render();
       }
     }
     function render() {
