@@ -76,10 +76,19 @@ def init_db() -> None:
             duration INTEGER NOT NULL DEFAULT 10,
             UNIQUE(display_id, media_id)
         );
+        CREATE TABLE IF NOT EXISTS display_controls (
+            display_id TEXT PRIMARY KEY REFERENCES displays(id) ON DELETE CASCADE,
+            mode TEXT NOT NULL DEFAULT 'play' CHECK(mode IN ('play','freeze','break')),
+            updated_at TEXT NOT NULL
+        );
         """)
         conn.execute(
             "INSERT OR IGNORE INTO displays(id, name, created_at) VALUES (?, ?, ?)",
             ("main", "KIDS LAB Main Display", now()),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO display_controls(display_id, mode, updated_at) VALUES ('main','play',?)",
+            (now(),),
         )
 
 
@@ -210,6 +219,8 @@ def create_display(payload: DisplayCreate, _: Admin):
             )
         except sqlite3.IntegrityError:
             raise HTTPException(409, "A display with that ID already exists")
+    with db() as conn:
+        conn.execute("INSERT OR IGNORE INTO display_controls(display_id, mode, updated_at) VALUES (?, 'play', ?)", (payload.id, now()))
     return {"id": payload.id, "name": payload.name.strip(), "player_url": f"/display/{payload.id}"}
 
 
@@ -368,6 +379,32 @@ def update_playlist(display_id: str, payload: PlaylistUpdate, _: Admin):
     return {"display_id": display_id, "count": len(payload.media_ids)}
 
 
+@app.get("/api/admin/displays/{display_id}/control")
+def get_display_control(display_id: str, _: Admin):
+    with db() as conn:
+        if not conn.execute("SELECT 1 FROM displays WHERE id=?", (display_id,)).fetchone():
+            raise HTTPException(404, "Display not found")
+        conn.execute("INSERT OR IGNORE INTO display_controls(display_id, mode, updated_at) VALUES (?, 'play', ?)", (display_id, now()))
+        row = conn.execute("SELECT mode FROM display_controls WHERE display_id=?", (display_id,)).fetchone()
+    return {"display_id": display_id, "mode": row["mode"]}
+
+
+@app.post("/api/admin/displays/{display_id}/control")
+def set_display_control(display_id: str, payload: dict, _: Admin):
+    mode = payload.get("mode")
+    if mode not in {"play", "freeze", "break"}:
+        raise HTTPException(400, "Mode must be play, freeze, or break")
+    with db() as conn:
+        if not conn.execute("SELECT 1 FROM displays WHERE id=?", (display_id,)).fetchone():
+            raise HTTPException(404, "Display not found")
+        conn.execute(
+            "INSERT INTO display_controls(display_id, mode, updated_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(display_id) DO UPDATE SET mode=excluded.mode, updated_at=excluded.updated_at",
+            (display_id, mode, now()),
+        )
+    return {"display_id": display_id, "mode": mode}
+
+
 @app.get("/api/player/{display_id}")
 def player_playlist(display_id: str):
     with db() as conn:
@@ -379,7 +416,9 @@ def player_playlist(display_id: str):
             FROM playlist_items p JOIN media m ON m.id=p.media_id
             WHERE p.display_id=? ORDER BY p.position, p.id
         """, (display_id,)).fetchall()
-    return {"display": row_dict(display), "items": [{**row_dict(r), "url": f"/media/{r['filename']}"} for r in rows]}
+        conn.execute("INSERT OR IGNORE INTO display_controls(display_id, mode, updated_at) VALUES (?, 'play', ?)", (display_id, now()))
+        control = conn.execute("SELECT mode FROM display_controls WHERE display_id=?", (display_id,)).fetchone()
+    return {"display": row_dict(display), "mode": control["mode"], "items": [{**row_dict(r), "url": f"/media/{r['filename']}"} for r in rows]}
 
 
 @app.get("/display/{display_id}", response_class=HTMLResponse)
