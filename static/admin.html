@@ -27,6 +27,7 @@
       <div class="panel display-panel">
         <div class="panel-heading"><div><h3>Display selector</h3><p>Every display has its own playback URL and playlist.</p></div></div>
         <div class="display-controls"><label class="field grow"><span>Current display</span><select id="display-select"></select></label><a id="open-player" class="button button-secondary" target="_blank" rel="noopener">Open player ↗</a></div>
+        <div class="control-strip"><span class="control-label">LIVE CONTROLS</span><button id="control-play" class="button button-primary">▶ Resume</button><button id="control-freeze" class="button button-secondary">Ⅱ Freeze frame</button><button id="control-break" class="button button-danger">■ Break / Black screen</button><span id="control-status" role="status">Playing</span></div>
         <form id="display-form" class="new-display-form"><label class="field"><span>New display name</span><input id="new-display-name" placeholder="e.g. Innovation Zone" maxlength="100" required></label><label class="field"><span>Display ID</span><input id="new-display-id" placeholder="innovation-zone" maxlength="40" pattern="[a-zA-Z0-9][a-zA-Z0-9_-]*" required></label><button class="button button-primary" type="submit">+ Add display</button></form>
       </div>
       <div class="columns">
