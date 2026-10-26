@@ -14,3 +14,9 @@ html:has(.player-body),body.player-body{margin:0!important;padding:0!important;w
 #break-screen[hidden]{display:none!important}
 .player-caption,.player-brand,.player-footer,.player-welcome{display:none!important}
 #player-content.buffering:after{content:"";display:none}
+
+.control-strip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:16px;padding-top:15px;border-top:1px solid var(--line)}
+.control-label{font:9px var(--mono);letter-spacing:.12em;color:var(--muted);margin-right:auto}
+#control-status{font-size:11px;color:var(--muted);min-width:95px;text-align:right}
+#control-break{background:#6b2d2d;color:#fff;border-color:#8a4141}
+#youtube-player iframe{position:absolute;inset:0;width:100%!important;height:100%!important;border:0}
