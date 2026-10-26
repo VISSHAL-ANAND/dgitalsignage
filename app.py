@@ -9,6 +9,7 @@ import sqlite3
 import subprocess
 import tempfile
 import uuid
+from urllib.parse import parse_qs, urlparse
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -289,6 +290,40 @@ async def upload_media(
         media_id = create_media_record(Path(original_name).stem[:200], filename, media_type, mime_type)
         add_to_playlist(display_id, media_id, duration)
         return {"uploaded": 1, "items": [{"id": media_id, "title": Path(original_name).stem}], "message": "Media uploaded."}
+
+
+def extract_youtube_id(raw_url: str) -> str:
+    parsed = urlparse(raw_url.strip())
+    host = (parsed.hostname or "").lower()
+    video_id = ""
+    if host == "youtu.be":
+        video_id = parsed.path.strip("/").split("/")[0]
+    elif host in {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com"}:
+        if parsed.path == "/watch":
+            video_id = parse_qs(parsed.query).get("v", [""])[0]
+        elif parsed.path.startswith(("/embed/", "/shorts/", "/live/")):
+            video_id = parsed.path.strip("/").split("/")[1]
+    if not re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+        raise HTTPException(400, "Enter a valid YouTube video URL.")
+    return video_id
+
+
+@app.post("/api/admin/youtube", status_code=201)
+def add_youtube_video(
+    _: Admin,
+    url: Annotated[str, Form()],
+    display_id: Annotated[str, Form()] = "main",
+):
+    video_id = extract_youtube_id(url)
+    with db() as conn:
+        if not conn.execute("SELECT 1 FROM displays WHERE id=?", (display_id,)).fetchone():
+            raise HTTPException(404, "Display not found")
+    media_id = create_media_record(
+        f"YouTube video · {video_id}", video_id, "video", "video/youtube"
+    )
+    add_to_playlist(display_id, media_id, 60)
+    return {"uploaded": 1, "items": [{"id": media_id, "title": f"YouTube video · {video_id}"}],
+            "message": "YouTube video added to the selected display."}
 
 
 @app.delete("/api/admin/media/{media_id}", status_code=204)
